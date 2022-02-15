@@ -1,4 +1,6 @@
 # “Why the Future Needs Us”
 
- <font size="2"> Ajuste de letra
- Cambios extra</font> 
+ <font size="2"> Hace aproximadamente 200 millones de años atrás hubo vida en el planeta tierra, un ecosistema en donde crecían plantas, estas eran devoradas por especies de animales que según su alimentación los clasificamos como herbívoros y estos a su vez eran devorados por su depredador, los animales carnívoros. Estos animales se trasladaban de un lugar a otro, esto para poder conseguir alimento, mientras se alimentaban, el otro lugar que dejaban atrás se recuperaba para que volvieran a crecer las plantas y de nuevo volvían para poder saciar sus necesidades alimenticias. Todo esto que hacían era guiado por su instinto de sobrevivir, ellos tenían en su conocimiento los pasos que debían de seguir para conseguir su alimento y poder sobrevivir. Ya muchos millones de años desṕués de la aparición de los dinosaurios comenzaron a aparecer las evidencias de un ser más inteligente que los dinosaurios.
+
+El ser humano llegó, igual que los dinosaurios, igualmente con el instinto de sobrevivir, a diferencia de los dinosaurios, el ser humano logró evolucionar y consecuentemente desarrollar una inteligencia que le ha ayudado a lo largo de los años desde su aparición a sobrevivir de una manera más adecuada a diferencia de sus predecesores. Pienso que esta inteligencia hizo que el ser humano desarrollara una forma de pensar y consecuentemente poder ver un problema y buscar una solución en base a su conocimiento actual. Desde ese entonces, a lo largo de los años, siento que esa habilidad de pensar ha evolucionado muy rápido por la necesidad de sobrevivir. "hola"
+</font> 

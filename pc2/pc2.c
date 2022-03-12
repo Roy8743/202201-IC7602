@@ -17,8 +17,7 @@ int main(int argc, char *argv[]) {
 	int num;
 	sscanf(argv[3], "%x", &num);
 
-	printf("0x%x %i\n", num, num);
-	printf("%s", ~001);
+	//printf("%s", ~001);
 
 	//3E = 111110
 	//printf("\n%b", num);

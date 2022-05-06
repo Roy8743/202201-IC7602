@@ -1,0 +1,30 @@
+version: "3.8"
+
+
+services:
+
+  calculadora_subred:
+    build: 
+      context: ./calculadora_subred
+      dockerfile: dockerFile
+    user: root
+    container_name: calculadora_subred
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    restart: on-failure
+    command: ["sleep", "infinity"]
+    tty: true
+    privileged: true
+    #ports:
+    # - "9666:9666/TCP"
+    volumes:
+      - ./calculadora_subred/bash.sh:/calculadora_subred/bash.sh
+      - ./calculadora_subred/calculadora_subred.c:/calculadora_subred/calculadora_subred.c
+    environment:
+      - HTTP_USER=foo
+      - HTTP_PASS=bar
+  
+  
+
+

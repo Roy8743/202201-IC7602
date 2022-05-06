@@ -4,8 +4,8 @@
 #touch /data/dhcpd/dhcpd.leases
 
 
-# Start devpi-server.
-gcc /calculadora_subred/calculadora_subred.c && ./a.out
+# Iniciar el servidor tcp de C
+calculadora_subred/make server -B
 
 #/etc/init.d/isc-dhcp-server start
 #dhcpd -cf /etc/dhcp/dhcpd.conf -lf /var/lib/dhcp/dhcpd.leases --no-pid -4 -f

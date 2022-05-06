@@ -14,16 +14,16 @@ services:
       - SYS_MODULE
     restart: on-failure
     command: ["sleep", "infinity"]
-    tty: true
+    #tty: true
     privileged: true
     #ports:
     # - "9666:9666/TCP"
     volumes:
-      - ./calculadora_subred/bash.sh:/calculadora_subred/bash.sh
+      - ./calculadora_subred/Makefile:/calculadora_subred/Makefile
       - ./calculadora_subred/calculadora_subred.c:/calculadora_subred/calculadora_subred.c
-    environment:
-      - HTTP_USER=foo
-      - HTTP_PASS=bar
+    #environment:
+    #  - HTTP_USER=foo
+    #  - HTTP_PASS=bar
   
   
 

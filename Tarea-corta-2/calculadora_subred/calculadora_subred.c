@@ -10,7 +10,7 @@
 #include <sys/types.h>
 
 //Puerto de mi servidor
-#define PORT 6995
+#define PORT 9666
 #define BACKLOG_SIZE 500 //cantidad de conexiones que va a poder almazenar
 #define MAX_PATH 4096 //max cantidad de caraceteres en el path
 

@@ -7,7 +7,8 @@ FROM ubuntu
 # Install the dhcpd server.
 RUN  apt-get update -y &&\
      apt-get upgrade -y &&\
-     apt install -y gcc
+     apt install -y gcc &&\
+     apt install make
 
 
 #ENTRYPOINT ["/bin/sh","/bash.sh"]

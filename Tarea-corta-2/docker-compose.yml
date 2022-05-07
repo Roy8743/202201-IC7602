@@ -16,15 +16,25 @@ services:
     command: ["sleep", "infinity"]
     #tty: true
     privileged: true
-    #ports:
-    # - "9666:9666/TCP"
+    ports:
+     - "9666:9666"
     volumes:
       - ./calculadora_subred/Makefile:/calculadora_subred/Makefile
       - ./calculadora_subred/calculadora_subred.c:/calculadora_subred/calculadora_subred.c
+      - ./calculadora_subred/bash.sh:/bash.sh
     #environment:
     #  - HTTP_USER=foo
     #  - HTTP_PASS=bar
-  
-  
+    networks:
+      host-pc:
 
 
+
+networks:
+  host-pc:
+    name: Host bridge
+    driver: bridge
+    driver_opts:
+      parent: eth0
+    ipam:
+      driver: default

@@ -5,8 +5,9 @@
 
 
 # Iniciar el servidor tcp de C
-calculadora_subred/make server -B
-
+cd calculadora_subred
+make server -B
+#tail -f /dev/null
 #/etc/init.d/isc-dhcp-server start
 #dhcpd -cf /etc/dhcp/dhcpd.conf -lf /var/lib/dhcp/dhcpd.leases --no-pid -4 -f
 #tail -f /dev/null

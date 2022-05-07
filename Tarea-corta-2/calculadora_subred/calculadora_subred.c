@@ -46,7 +46,8 @@ struct Response{
 }typedef Response;
 
 
-
+//Candados para proteccion de zonas de código
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 /*
 
 Request *newRequest(){
@@ -181,6 +182,14 @@ void * handleMessage(int* p_client_socket){
 
 */
 
+void * handleMessage(int* p_client_socket){
+    printf("Bienvenido nuevo cliente jejejjeje");
+    while (1)
+    { 
+    }
+    
+}
+
 int main(int argc, char **argv){
 
 
@@ -198,6 +207,7 @@ int main(int argc, char **argv){
     //AF_INET es una familia de direcciones
     direccionServer.sin_family = AF_INET;
     //INADDR_ANY = en realidad es la IP especial 0.0.0.0
+    //direccionServer.sin_addr.s_addr = inet_addr("127.0.0.1");
     direccionServer.sin_addr.s_addr = INADDR_ANY;
     //Este es el puerto del servidor
     direccionServer.sin_port = htons(PORT);
@@ -216,7 +226,7 @@ int main(int argc, char **argv){
         return 1;
     }
     
-    
+    //pthread_mutex_lock(&lock);
     while (1) {
         int client_socket;
         printf("Esperando conexiones\n");
@@ -227,6 +237,9 @@ int main(int argc, char **argv){
 
         int *pclient = malloc(sizeof(int));
         *pclient = client_socket;
+
+        pthread_t thread;
+        pthread_create(&thread, NULL, (void *) handleMessage, pclient);
 
 
         //Recibo el mensaje del cliente

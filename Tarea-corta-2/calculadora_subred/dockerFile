@@ -11,4 +11,4 @@ RUN  apt-get update -y &&\
      apt install make
 
 
-#ENTRYPOINT ["/bin/sh","/bash.sh"]
+ENTRYPOINT ["/bin/sh","/bash.sh"]

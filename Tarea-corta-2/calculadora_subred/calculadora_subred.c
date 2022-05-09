@@ -8,6 +8,7 @@
 #include <wait.h>
 #include <fcntl.h> 
 #include <sys/types.h>
+#include <regex.h>
 
 //Puerto de mi servidor
 #define PORT 9666
@@ -105,27 +106,28 @@ Request *parseMessage(char *buffer){
     return r;
 }
 
+*/
+
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
-    //free(p_client_socket);
-    char buffer[BUFSIZ];
-
-    memset(buffer,0,strlen(buffer));
-    size_t bytes_read;
+    free(p_client_socket);
     
-    int msgsize = 0;
+    //Buffer para almacenar los mensajaes
+    char buffer[BUFSIZ];
+    memset(buffer,0,strlen(buffer));
 
+
+    size_t bytes_read;
+    int msgsize = 0;
+    char actualpath[MAX_PATH+1];
     fd_set fds;
     FD_ZERO(&fds);
     FD_SET(client_socket,&fds);
     char numberString[4096];
 
-    //esperamos 1 segundo si aun no hay nada en el socket de lectura
-    //while(select(FD_SETSIZE,&fds,NULL,NULL,NULL)==0){
-        //sleep(1);
-    //}
-    msgsize=0;
-    //lee al cliente y obtiene el nombre del archivo
+    
+
+    //lee la informacion escrita por el cliente y guarda en buffer
     while((bytes_read = read(client_socket, buffer+msgsize, sizeof(buffer)-msgsize-1)) > 0 ) {
         msgsize += bytes_read;
         if (msgsize > BUFSIZ-1 || buffer[msgsize-1] == '\n') break;
@@ -135,9 +137,9 @@ void * handleMessage(int* p_client_socket){
         exit(1);
     }
     buffer[msgsize-1] = 0; //se termina el msg en null y se remueve el \n
-    printf("Buffer:[%s]\n",buffer);
+    printf("%s\n",buffer);
 
-    //Proceso lo que me envió el cliente
+    /*
     Request *r = parseMessage(buffer);
 
 
@@ -145,50 +147,38 @@ void * handleMessage(int* p_client_socket){
         close(client_socket);
         return NULL;
     }
-    toString(r);
+    //toString(r);
     fflush(stdout);
 
-    //Para responder al cliente
     Response *response;
-    
     //Veo en que metodo cae
     if (!strcmp(r->method,"GET")){
-        print("Hola");
-        //response = executeGet(r,buffer,&client_socket);
+        response = executeGet(r,buffer,&client_socket);
         if(response == NULL){
             close(client_socket);
             return NULL;
         }
+    }else if (!strcmp(r->method,"POST")){
+        close(client_socket);
+        return NULL;
     }else{
         
-        //TODO Not Implemented response
-         
         close(client_socket);
         return NULL;
     }
-
     while(response->size > 0){
         writeResponse(response->type,response,&client_socket);
         response->size = 0;
         //printf("write :  %ld\n", n);
     }
     //writeResponse(response->type,response,&client_socket);
-
-    freeRequest(r);
-    freeResponse(response);
+    */
+    //freeRequest(r);
+    //freeResponse(response);
     close(client_socket);
     printf("cerrando conexion\n");
 }
 
-*/
-
-void * handleMessage(int* p_client_socket){
-    printf("Bienvenido nuevo cliente jejejjeje");
-    while (1)
-    { 
-    }
-    
-}
 
 int main(int argc, char **argv){
 

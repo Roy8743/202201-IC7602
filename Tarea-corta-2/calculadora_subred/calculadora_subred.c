@@ -54,7 +54,7 @@ struct Response{
 
 
 //Candados para proteccion de zonas de código
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock_primitivas = PTHREAD_MUTEX_INITIALIZER;
 /*
 
 Request *newRequest(){
@@ -115,7 +115,7 @@ Request *parseMessage(char *buffer){
 */
 
 int numeroPrimitiva(char * buffer){
-
+    pthread_mutex_lock(&lock_primitivas);
     regex_t regex;
 
     int broadcast;
@@ -181,44 +181,22 @@ void * handleMessage(int* p_client_socket){
     printf("%s\n",buffer);
 
     int primitiva = numeroPrimitiva(buffer);
-    printf("\n%d", primitiva);
-
-    /*
-    Request *r = parseMessage(buffer);
+    pthread_mutex_unlock(&lock_primitivas);
+    printf("Primitiva es : %d\n", primitiva);
 
 
-    if(r==NULL){
-        close(client_socket);
-        return NULL;
-    }
-    //toString(r);
-    fflush(stdout);
-
-    Response *response;
-    //Veo en que metodo cae
-    if (!strcmp(r->method,"GET")){
-        response = executeGet(r,buffer,&client_socket);
-        if(response == NULL){
-            close(client_socket);
-            return NULL;
-        }
-    }else if (!strcmp(r->method,"POST")){
-        close(client_socket);
-        return NULL;
+    if (primitiva == BROADCAST){
+        printf("Brodcast\n");
+    }else if (primitiva == NETWORK_NUMBER){
+        printf("NETWORK_NUMBER\n");
+    }else if (primitiva == HOSTS_RANGE){
+        printf("HOSTS_RANGE\n");
+    }else if (primitiva == RANDOM_SUBNETS){
+        printf("RANDOM_SUBNETS\n");
     }else{
-        
-        close(client_socket);
-        return NULL;
+        printf("\nError no existe el comando");
     }
-    while(response->size > 0){
-        writeResponse(response->type,response,&client_socket);
-        response->size = 0;
-        //printf("write :  %ld\n", n);
-    }
-    //writeResponse(response->type,response,&client_socket);
-    */
-    //freeRequest(r);
-    //freeResponse(response);
+    
     close(client_socket);
     printf("cerrando conexion\n");
 }

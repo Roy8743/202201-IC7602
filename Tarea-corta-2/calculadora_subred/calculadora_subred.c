@@ -23,6 +23,12 @@ typedef struct sockaddr_in SA_IN;
 typedef struct sockaddr SA;
 
 
+enum PRIMITIVA{
+    BROADCAST = 1,
+    NETWORK_NUMBER = 2,
+    HOSTS_RANGE = 3,
+    RANDOM_SUBNETS = 4
+};
 
 //Estructuras de datos utilizadas
 struct Header{
@@ -108,6 +114,23 @@ Request *parseMessage(char *buffer){
 
 */
 
+int numeroPrimitiva(char * buffer){
+
+    printf("\nBuffer en numero primitiva: %s\n",buffer);
+
+    if (strstr(buffer, "%[GET BROADCAST IP]") != NULL) {
+        return 1;
+	}else if (strstr(buffer, "NETWORK") != NULL){
+        return 4;
+    }else if (strstr(buffer, "HOSTS RANGE") != NULL){
+        return 3;
+    }else if (strstr(buffer, "RANDOM SUBNETS") != NULL){
+        return 2;
+    }else{
+        return -1;
+    }
+}
+
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
     free(p_client_socket);
@@ -138,6 +161,9 @@ void * handleMessage(int* p_client_socket){
     }
     buffer[msgsize-1] = 0; //se termina el msg en null y se remueve el \n
     printf("%s\n",buffer);
+
+    int primitiva = numeroPrimitiva(buffer);
+    printf("\n%d", primitiva);
 
     /*
     Request *r = parseMessage(buffer);

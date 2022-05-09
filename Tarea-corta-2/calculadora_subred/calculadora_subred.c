@@ -116,16 +116,34 @@ Request *parseMessage(char *buffer){
 
 int numeroPrimitiva(char * buffer){
 
-    printf("\nBuffer en numero primitiva: %s\n",buffer);
+    regex_t regex;
 
-    if (strstr(buffer, "%[GET BROADCAST IP]") != NULL) {
+    int broadcast;
+    int network_number;
+    int host_range;
+    int random_subnets;
+
+    broadcast = regcomp(&regex,"GET BROADCAST IP [0-9]+.[0-9]+.[0-9]+.[0-9]+ MASK ([0-9]+.[0-9]+.[0-9]+.[0-9]+|/[0-9]+)",REG_EXTENDED);
+    broadcast = regexec(&regex, buffer, 0, NULL, 0);
+
+    network_number = regcomp(&regex,"GET NETWORK NUMBER IP [0-9]+.[0-9]+.[0-9]+.[0-9]+ MASK ([0-9]+.[0-9]+.[0-9]+.[0-9]+|/[0-9]+)",REG_EXTENDED);
+    network_number = regexec(&regex, buffer, 0, NULL, 0);
+
+    host_range = regcomp(&regex,"GET HOSTS RANGE IP [0-9]+.[0-9]+.[0-9]+.[0-9]+ MASK ([0-9]+.[0-9]+.[0-9]+.[0-9]+|/[0-9]+)",REG_EXTENDED);
+    host_range = regexec(&regex, buffer, 0, NULL, 0);
+
+    random_subnets = regcomp(&regex,"GET RANDOM SUBNETS NETWORK NUMBER [0-9]+.[0-9]+.[0-9]+.[0-9]+ MASK ([0-9]+.[0-9]+.[0-9]+.[0-9]+|/[0-9]+) NUMBER [0-9]+ SIZE ([0-9]+.[0-9]+.[0-9]+.[0-9]+|/[0-9]+)",REG_EXTENDED);
+    random_subnets = regexec(&regex, buffer, 0, NULL, 0);
+
+
+    if (broadcast == 0) {
         return 1;
-	}else if (strstr(buffer, "NETWORK") != NULL){
-        return 4;
-    }else if (strstr(buffer, "HOSTS RANGE") != NULL){
-        return 3;
-    }else if (strstr(buffer, "RANDOM SUBNETS") != NULL){
+	}else if (network_number == 0){
         return 2;
+    }else if (host_range == 0){
+        return 3;
+    }else if (random_subnets == 0){
+        return 4;
     }else{
         return -1;
     }

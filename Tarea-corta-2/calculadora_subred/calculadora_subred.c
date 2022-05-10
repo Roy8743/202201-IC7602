@@ -117,44 +117,29 @@ Request *parseMessage(char *buffer){
 }
 
 */
-unsigned long int ipToDecimal(char* ip){
-    //COnvierto una ip a su valor en decimal
-    char *token;
+
+unsigned long int ipToDecimal(char * ip){
+	
+	char *token;
     token = strtok(ip, ".");
-
-    char *pAddr;
-    pAddr=(char*)malloc(sizeof(char)*100);
-
-
-    char* a;
-    char* b;
-    char* c;
-    char* d;
-    a=(char*)malloc(sizeof(char)*20);
-    b=(char*)malloc(sizeof(char)*20);
-    c=(char*)malloc(sizeof(char)*20);
-    d=(char*)malloc(sizeof(char)*20);
-
-    strcpy(a, token);
-    //strcat(a, ".");
+    
+    unsigned long int a = atol(token);
+    a = a << 24;
     token = strtok(NULL, ".");
-    strcpy(b, token);
-    strcat(b, ".");
+    
+    unsigned long int b = atol(token);
+    b = b << 16;
     token = strtok(NULL, ".");
-    strcpy(c, token);
-    strcat(c, ".");
+    
+    unsigned long int c = atol(token);
+    c = c << 8;
     token = strtok(NULL, ".");
-    strcpy(d, token);
-    strcat(d, ".");
-
-    strcat(pAddr, d);
-    strcat(pAddr, c);
-    strcat(pAddr, b);
-    strcat(pAddr, a);
-
-    unsigned long int resp = inet_addr(pAddr);
-
-    return resp;
+    
+    unsigned long int d = atol(token);
+    //d = d << 8;
+    
+    a = a | b | c | d;
+    return a;
 }
 
 char* decimalToIp(unsigned long int ip){
@@ -168,6 +153,7 @@ char* decimalToIp(unsigned long int ip){
 
     char *pAddr;
     pAddr=(char*)malloc(sizeof(char)*100);
+    memset(pAddr,0,strlen(pAddr));
 
 
     char* a;
@@ -338,22 +324,26 @@ void * handleMessage(int* p_client_socket){
             reverseMask = reverseMask ^ mask;
             unsigned long int broadcast = ipDec | reverseMask;
 
-            printf("%ld\n",broadcast);
-            printf("%ld\n",mask);
-            //printf("%ld\n",mask);
-            //printf("%ld\n",ip_dec);
-            //printf("%s", decimalToIp(168296965));
-
-
+            printf("%s\n",decimalToIp(broadcast));
+        
+        //La mascara viene en formato 255.255.255.255
         }else{
+            //Convierto la máscara a decimal
+            unsigned long int mask = ipToDecimal(tokens_broadcast[5]);
 
+            //Convierto ip a decimal
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
+
+            //Realizo la operacion para sacar el broadcast
+            unsigned long int reverseMask = pow(2, 32) -1;
+            reverseMask = reverseMask ^ mask;
+            unsigned long int broadcast = ipDec | reverseMask;
+
+            printf("%s\n",decimalToIp(broadcast));
         }
 
-
-
-
     }else if (primitiva == NETWORK_NUMBER){
-
+        
     }else if (primitiva == HOSTS_RANGE){
         
     }else if (primitiva == RANDOM_SUBNETS){
@@ -417,11 +407,6 @@ int main(int argc, char **argv){
 
         pthread_t thread;
         pthread_create(&thread, NULL, (void *) handleMessage, pclient);
-
-
-        //Recibo el mensaje del cliente
-        printf("%s: ", "Todo bien hasta acá");
-        //handleMessage(pclient); 
         
     }
 

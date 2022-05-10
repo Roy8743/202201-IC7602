@@ -157,10 +157,14 @@ unsigned long int ipToDecimal(char* ip){
     return resp;
 }
 
-unsigned long int decimalToIp(char* ip){
-    //COnvierto una ip a su valor en decimal
+char* decimalToIp(unsigned long int ip){
+    //COnvierto una numero en decimal, a su valor en ip.
+    
+    struct in_addr ip_addr;
+    ip_addr.s_addr = ip;
+    
     char *token;
-    token = strtok(ip, ".");
+    token = strtok(inet_ntoa(ip_addr), ".");
 
     char *pAddr;
     pAddr=(char*)malloc(sizeof(char)*100);
@@ -192,13 +196,11 @@ unsigned long int decimalToIp(char* ip){
     strcat(pAddr, b);
     strcat(pAddr, a);
 
-    printf("XD perro: %s\n",pAddr);
-    unsigned long int resp = inet_addr(pAddr);
-
-    return resp;
+    return pAddr;
 }
 
 int extractInt(char* cidr){
+    //ESto para extraer el mumero del texto /29
 	char resp[5];;
     strcpy(resp, cidr);
 	
@@ -309,39 +311,38 @@ void * handleMessage(int* p_client_socket){
 
     int primitiva = numeroPrimitiva(buffer);
     pthread_mutex_unlock(&lock_primitivas);
-    printf("Primitiva es : %d\n", primitiva);
+    //printf("Primitiva es : %d\n", primitiva);
 
 
     if (primitiva == BROADCAST){
 
-        //GUardo los
+        //GUardo los tokens
         char **tokens_broadcast;
         tokens_broadcast = tokenizer(buffer);
         pthread_mutex_unlock(&tokenizer_lock);
-
-        if (tokens_broadcast[5]){}
-        printf("token[5] = %s\n", tokens_broadcast[5]);
 
         if (strstr(tokens_broadcast[5], "/") != NULL) {            
             //Calculo el número de prefijo de la máscara si es /29
             unsigned long int prefijo = extractInt(tokens_broadcast[5]);
 
             //Calculo el número de prefijo de la máscara si es /29
-            printf("%ld\n", prefijo);
+            //printf("%ld\n", prefijo);
             unsigned long int mask = pow(2,prefijo) -1;
             mask = mask << (32-prefijo);
-            //unsigned long int ip = ipTonumber()
-            //printf("%ld\n", ones);
-            //unsigned long b = pow(2,32)-1;
-            //unsigned long a = a = ((a << 32) ^ b);
             
             //Extraigo el número de 32 bits que representa el ip
-            char* ipAddr = tokens_broadcast[3];
-            unsigned long int ip_dec = inet_addr(ipAddr);
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
 
+            //Realizo la operacion para sacar el broadcast
+            unsigned long int reverseMask = pow(2, 32) -1;
+            reverseMask = reverseMask ^ mask;
+            unsigned long int broadcast = ipDec | reverseMask;
+
+            printf("%ld\n",broadcast);
             printf("%ld\n",mask);
-            printf("%ld\n",ip_dec);
-            printf("%ld", extractDecimal(tokens_broadcast[3]));
+            //printf("%ld\n",mask);
+            //printf("%ld\n",ip_dec);
+            //printf("%s", decimalToIp(168296965));
 
 
         }else{

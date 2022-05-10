@@ -9,11 +9,13 @@
 #include <fcntl.h> 
 #include <sys/types.h>
 #include <regex.h>
+#include <math.h>
 
 //Puerto de mi servidor
 #define PORT 9666
 #define BACKLOG_SIZE 500 //cantidad de conexiones que va a poder almazenar
 #define MAX_PATH 4096 //max cantidad de caraceteres en el path
+#define MAX_TOKENS 15 
 
 //Tamaño del buffer para recibir mensjaes por parte de un cliente
 //#define BUFSIZ 2048
@@ -55,6 +57,8 @@ struct Response{
 
 //Candados para proteccion de zonas de código
 pthread_mutex_t lock_primitivas = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t Mask = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t tokenizer_lock = PTHREAD_MUTEX_INITIALIZER;
 /*
 
 Request *newRequest(){
@@ -113,6 +117,119 @@ Request *parseMessage(char *buffer){
 }
 
 */
+unsigned long int ipToDecimal(char* ip){
+    //COnvierto una ip a su valor en decimal
+    char *token;
+    token = strtok(ip, ".");
+
+    char *pAddr;
+    pAddr=(char*)malloc(sizeof(char)*100);
+
+
+    char* a;
+    char* b;
+    char* c;
+    char* d;
+    a=(char*)malloc(sizeof(char)*20);
+    b=(char*)malloc(sizeof(char)*20);
+    c=(char*)malloc(sizeof(char)*20);
+    d=(char*)malloc(sizeof(char)*20);
+
+    strcpy(a, token);
+    //strcat(a, ".");
+    token = strtok(NULL, ".");
+    strcpy(b, token);
+    strcat(b, ".");
+    token = strtok(NULL, ".");
+    strcpy(c, token);
+    strcat(c, ".");
+    token = strtok(NULL, ".");
+    strcpy(d, token);
+    strcat(d, ".");
+
+    strcat(pAddr, d);
+    strcat(pAddr, c);
+    strcat(pAddr, b);
+    strcat(pAddr, a);
+
+    unsigned long int resp = inet_addr(pAddr);
+
+    return resp;
+}
+
+unsigned long int decimalToIp(char* ip){
+    //COnvierto una ip a su valor en decimal
+    char *token;
+    token = strtok(ip, ".");
+
+    char *pAddr;
+    pAddr=(char*)malloc(sizeof(char)*100);
+
+
+    char* a;
+    char* b;
+    char* c;
+    char* d;
+    a=(char*)malloc(sizeof(char)*20);
+    b=(char*)malloc(sizeof(char)*20);
+    c=(char*)malloc(sizeof(char)*20);
+    d=(char*)malloc(sizeof(char)*20);
+
+    strcpy(a, token);
+    //strcat(a, ".");
+    token = strtok(NULL, ".");
+    strcpy(b, token);
+    strcat(b, ".");
+    token = strtok(NULL, ".");
+    strcpy(c, token);
+    strcat(c, ".");
+    token = strtok(NULL, ".");
+    strcpy(d, token);
+    strcat(d, ".");
+
+    strcat(pAddr, d);
+    strcat(pAddr, c);
+    strcat(pAddr, b);
+    strcat(pAddr, a);
+
+    printf("XD perro: %s\n",pAddr);
+    unsigned long int resp = inet_addr(pAddr);
+
+    return resp;
+}
+
+int extractInt(char* cidr){
+	char resp[5];;
+    strcpy(resp, cidr);
+	
+    char *p;
+	p = resp;
+	while (*p != '\0') {
+		if (*p == '/') *p = ' ';
+		p++;
+	}
+    return atoi(resp);
+}
+
+char ** tokenizer(char * buffer){
+    pthread_mutex_lock(&tokenizer_lock);
+    //Creo un array para guardar los tokens
+    char **tokens;
+    //Variable que guarda cada token
+    char *token;
+    
+    // Guardo memoria a los tokens
+    tokens = malloc(MAX_TOKENS * sizeof(char*));
+
+    token = strtok(buffer, " ");
+
+    for(int i = 0; i < 6; i++) {
+        tokens[i] = malloc((100 + 1) * sizeof(char));
+        strcpy(tokens[i], token);
+        token = strtok(NULL, " ");
+        }
+    return tokens; 
+}
 
 int numeroPrimitiva(char * buffer){
     pthread_mutex_lock(&lock_primitivas);
@@ -148,6 +265,16 @@ int numeroPrimitiva(char * buffer){
         return -1;
     }
 }
+
+//main() {
+//    uint32_t ip = 4286578688;
+//    struct in_addr ip_addr;
+//    ip_addr.s_addr = ip;
+//    printf("The IP address is %s\n", inet_ntoa(ip_addr));
+//}
+
+//int ipToInt(){}
+//char * IntToIp{}
 
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
@@ -186,13 +313,50 @@ void * handleMessage(int* p_client_socket){
 
 
     if (primitiva == BROADCAST){
-        printf("Brodcast\n");
+
+        //GUardo los
+        char **tokens_broadcast;
+        tokens_broadcast = tokenizer(buffer);
+        pthread_mutex_unlock(&tokenizer_lock);
+
+        if (tokens_broadcast[5]){}
+        printf("token[5] = %s\n", tokens_broadcast[5]);
+
+        if (strstr(tokens_broadcast[5], "/") != NULL) {            
+            //Calculo el número de prefijo de la máscara si es /29
+            unsigned long int prefijo = extractInt(tokens_broadcast[5]);
+
+            //Calculo el número de prefijo de la máscara si es /29
+            printf("%ld\n", prefijo);
+            unsigned long int mask = pow(2,prefijo) -1;
+            mask = mask << (32-prefijo);
+            //unsigned long int ip = ipTonumber()
+            //printf("%ld\n", ones);
+            //unsigned long b = pow(2,32)-1;
+            //unsigned long a = a = ((a << 32) ^ b);
+            
+            //Extraigo el número de 32 bits que representa el ip
+            char* ipAddr = tokens_broadcast[3];
+            unsigned long int ip_dec = inet_addr(ipAddr);
+
+            printf("%ld\n",mask);
+            printf("%ld\n",ip_dec);
+            printf("%ld", extractDecimal(tokens_broadcast[3]));
+
+
+        }else{
+
+        }
+
+
+
+
     }else if (primitiva == NETWORK_NUMBER){
-        printf("NETWORK_NUMBER\n");
+
     }else if (primitiva == HOSTS_RANGE){
-        printf("HOSTS_RANGE\n");
+        
     }else if (primitiva == RANDOM_SUBNETS){
-        printf("RANDOM_SUBNETS\n");
+        
     }else{
         printf("\nError no existe el comando");
     }

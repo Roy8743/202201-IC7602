@@ -277,6 +277,71 @@ int numeroPrimitiva(char * buffer){
 //int ipToInt(){}
 //char * IntToIp{}
 
+
+
+char * usableIpRange(unsigned long int ip, unsigned long int mask){
+    //recibo el ip y las mascara en decimal
+    
+    //Calculo el networkNumber
+    unsigned long int networkAddress = ip & mask;
+
+    //Calculo el broadcast
+    unsigned long int reverseMask = BITWISE_32UNOS;
+    reverseMask = reverseMask ^ mask;
+    unsigned long int broadcast = ip | reverseMask;
+
+    //Convierto el networkAddress y el broadcast a texto
+    char * networkAddressText;
+    char * broadcastText;
+    networkAddressText=(char*)malloc(sizeof(char)*200);
+    broadcastText=(char*)malloc(sizeof(char)*200);
+    strcpy(networkAddressText, decimalToIp(networkAddress));
+    strcpy(broadcastText, decimalToIp(broadcast));
+
+    //Almacenar el rango de ip
+    char *ipRange;
+    ipRange=(char*)malloc(sizeof(char)*200);
+    memset(ipRange,0,strlen(ipRange));
+
+    char *save_token_networkAddress, *save_token_broadcast;
+    char *token_networkAddress, *token_broadcast;
+
+    token_networkAddress = strtok_r(networkAddressText, ".", &save_token_networkAddress);
+    token_broadcast = strtok_r(broadcastText, ".", &save_token_broadcast);
+
+    for(int i = 0; i<3; i++){
+        if (strcmp(token_networkAddress, token_broadcast) == 0){
+            strcat(ipRange,token_networkAddress);
+            strcat(ipRange,".");
+        }else{
+            strcat(ipRange,"{");
+            strcat(ipRange,token_networkAddress);
+            strcat(ipRange,"-");
+            strcat(ipRange,token_broadcast);
+            strcat(ipRange,"}");
+            strcat(ipRange,".");
+        }
+        token_networkAddress = strtok_r(NULL, ".", &save_token_networkAddress);
+        token_broadcast = strtok_r(NULL, ".", &save_token_broadcast);
+    }
+
+    strcat(ipRange,"{");
+    int rango1 = atoi(token_networkAddress);
+    rango1 = rango1 + 1;
+    char ran1[10];
+    sprintf(ran1, "%d", rango1);
+    strcat(ipRange,ran1);
+    strcat(ipRange,"-");
+    int rango2 = atoi(token_broadcast);
+    rango2 = rango2 - 1;
+    char ran2[10];
+    sprintf(ran2, "%d", rango2);
+    strcat(ipRange,ran2);
+    strcat(ipRange,"}");
+
+    return ipRange;
+}
+
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
     free(p_client_socket);
@@ -355,6 +420,7 @@ void * handleMessage(int* p_client_socket){
         }
 
     }else if (primitiva == NETWORK_NUMBER){
+        //Tambien conocido como network address
         
         if (strstr(tokens_broadcast[6], "/") != NULL) {
             //Calculo el número de prefijo de la máscara si es /entero
@@ -380,7 +446,28 @@ void * handleMessage(int* p_client_socket){
         }
         
     }else if (primitiva == HOSTS_RANGE){
-        
+        if(strstr(tokens_broadcast[6], "/") != NULL){
+            //Calculo el número de prefijo de la máscara si es /entero
+            unsigned long int prefijo = extractInt(tokens_broadcast[6]);
+            //Extraigo el número de 32 bits que representa el ip
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+
+            unsigned long int mask = pow(2,prefijo) -1;
+            mask = mask << (32-prefijo);
+
+            char * hostRange = usableIpRange(ipDec, mask);
+            printf("hostRange: %s\n", hostRange);
+
+        }else{
+            //Convierto la máscara a decimal
+            unsigned long int mask = ipToDecimal(tokens_broadcast[6]);
+            //Convierto ip a decimal
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+
+            char * hostRange = usableIpRange(ipDec, mask);
+            printf("hostRange: %s\n", hostRange);
+        }
+
     }else if (primitiva == RANDOM_SUBNETS){
         
     }else{

@@ -20,6 +20,10 @@
 //Tamaño del buffer para recibir mensjaes por parte de un cliente
 //#define BUFSIZ 2048
 
+//Bitwise----------------------------------------------------------------------------------------
+#define BITWISE_32UNOS 4294967295 //Número para trabajar con bitwise, equivalente 4 octetos todos con unos. o 2^32-1
+//--------------------------------------------------------------------------------------------
+
 //EStructuras para los sockets
 typedef struct sockaddr_in SA_IN;
 typedef struct sockaddr SA;
@@ -210,12 +214,21 @@ char ** tokenizer(char * buffer){
     tokens = malloc(MAX_TOKENS * sizeof(char*));
 
     token = strtok(buffer, " ");
-
-    for(int i = 0; i < 6; i++) {
+    
+    int i = 0;
+    while (token != NULL){
         tokens[i] = malloc((100 + 1) * sizeof(char));
         strcpy(tokens[i], token);
         token = strtok(NULL, " ");
-        }
+        if (token == NULL){break;}
+        i = i + 1;
+    }
+    
+    //for(int i = 0; i < 6; i++) {
+    //    tokens[i] = malloc((100 + 1) * sizeof(char));
+    //    strcpy(tokens[i], token);
+    //    token = strtok(NULL, " ");
+    //    }
     return tokens; 
 }
 
@@ -299,14 +312,13 @@ void * handleMessage(int* p_client_socket){
     pthread_mutex_unlock(&lock_primitivas);
     //printf("Primitiva es : %d\n", primitiva);
 
+    char **tokens_broadcast;
+    tokens_broadcast = tokenizer(buffer);
+    pthread_mutex_unlock(&tokenizer_lock);
 
     if (primitiva == BROADCAST){
 
         //GUardo los tokens
-        char **tokens_broadcast;
-        tokens_broadcast = tokenizer(buffer);
-        pthread_mutex_unlock(&tokenizer_lock);
-
         if (strstr(tokens_broadcast[5], "/") != NULL) {            
             //Calculo el número de prefijo de la máscara si es /29
             unsigned long int prefijo = extractInt(tokens_broadcast[5]);
@@ -320,7 +332,7 @@ void * handleMessage(int* p_client_socket){
             unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
 
             //Realizo la operacion para sacar el broadcast
-            unsigned long int reverseMask = pow(2, 32) -1;
+            unsigned long int reverseMask = BITWISE_32UNOS;
             reverseMask = reverseMask ^ mask;
             unsigned long int broadcast = ipDec | reverseMask;
 
@@ -335,7 +347,7 @@ void * handleMessage(int* p_client_socket){
             unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
 
             //Realizo la operacion para sacar el broadcast
-            unsigned long int reverseMask = pow(2, 32) -1;
+            unsigned long int reverseMask = BITWISE_32UNOS;
             reverseMask = reverseMask ^ mask;
             unsigned long int broadcast = ipDec | reverseMask;
 
@@ -343,6 +355,29 @@ void * handleMessage(int* p_client_socket){
         }
 
     }else if (primitiva == NETWORK_NUMBER){
+        
+        if (strstr(tokens_broadcast[6], "/") != NULL) {
+            //Calculo el número de prefijo de la máscara si es /entero
+            unsigned long int prefijo = extractInt(tokens_broadcast[6]);
+            //Extraigo el número de 32 bits que representa el ip
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+
+            unsigned long int mask = pow(2,prefijo) -1;
+            mask = mask << (32-prefijo);
+
+            //Calculo de numero de red
+            unsigned long int networkNumber = ipDec & mask;
+            printf("NUmero de red: %s\n", decimalToIp(networkNumber));
+
+        }else{
+            //Convierto la máscara a decimal
+            unsigned long int mask = ipToDecimal(tokens_broadcast[6]);
+            //Convierto ip a decimal
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+
+            unsigned long int networkNumber = ipDec & mask;
+            printf("NUmero de red: %s\n", decimalToIp(networkNumber));
+        }
         
     }else if (primitiva == HOSTS_RANGE){
         

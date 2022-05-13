@@ -30,102 +30,39 @@ typedef struct sockaddr SA;
 
 
 enum PRIMITIVA{
+    NINGUN_CASO = 5,
     BROADCAST = 1,
     NETWORK_NUMBER = 2,
     HOSTS_RANGE = 3,
     RANDOM_SUBNETS = 4,
-    EXIT = -2
+    NOT_COMMAND_FOUND = -1,
+    EXIT = -2,
+    BAD_IP = -3,
+    BAD_MASK = -4
 };
 
 //Estructuras de datos utilizadas
-struct Header{
-    char *key;
-    char *value;
-}typedef Header;
-
-struct Request{
-    char *path;
-    char *method;
-    Header *headers;
-    int headersLength;
-}typedef Request;
-
-struct Response{
-    long int contentLength;
-    char *status;
-    FILE *fp;
-    Header *headers;
-    int size;
-    int type;
-}typedef Response;
+struct TOKENS{
+    char **lista;
+    int largo;
+}typedef TOKENS;
 
 
 //Candados para proteccion de zonas de código
 pthread_mutex_t lock_primitivas = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t Mask = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t tokenizer_lock = PTHREAD_MUTEX_INITIALIZER;
-/*
 
-Request *newRequest(){
-    Request *r;
-    r = (Request *) malloc(sizeof(Request));
-    r->path = (char *) malloc(sizeof(char) * (MAX_PATH - 1));
-    r->method = (char *) malloc(sizeof(char) * 25);
-    r->headersLength = 0;
-    r->headers = (Header *) malloc(sizeof(Header) * 35);
-    return r;
-}
 
-Request *parseMessage(char *buffer){
-    char actualpath[MAX_PATH+1];
-    Request *r = newRequest();
-    //
-      //home/jonder/Escritorio/Git/Sistemas_operativos_proyecto_3/datos/
-      //home/meta/CLionProjects/Sistemas_operativos_proyecto_3/datos/
-      //home/estudiante/Escritorio/Sistemas_operativos_proyecto_3/datos/
-     //
-    strreplace(buffer,"/","/home/estudiante/Escritorio/Sistemas_operativos_proyecto_3/datos/");
-    // Separa el request por header
-    char * headerToken = strtok(strdup(buffer), "\r\n");
-    // Separo el method y path
-    char *tempHeader = strdup(headerToken);
-    //strcpy(tempHeader, headerToken);
-    char* token = strtok(tempHeader, " ");
-    strncpy(r->method, token, sizeof(r->method) - 1);
-    r->method[sizeof(r->method)] = '\0';
-    token = strtok(NULL, " ");
-    if(realpath(token,actualpath)==NULL){
-        printf("Error(bad path): %s\n",token);
-        return NULL;
-    }
-    strcpy(r->path,actualpath);
-    r->headersLength = 0;
-    // Loop para separar cada header
-    char **headersRaw;
-    headersRaw = (char **) malloc(sizeof(char*)*35);
-    for (int i = 0; i < 35; ++i) {
-        headersRaw[i] = (char *) malloc(sizeof(char)*150);
-    }
-    headerToken = strtok(buffer, "\r\n");
-    headerToken = strtok(NULL, "\r\n");
-    while( headerToken != NULL ) {
-        //printf("[%s]\n", headerToken);
-        strcpy(headersRaw[r->headersLength],headerToken);
-        r->headersLength++;
-        headerToken = strtok(NULL, "\r\n");
-    }
-    for (int i = 0; i < r->headersLength; ++i) {
-        Header *header = newHeader(headersRaw[i]);
-        r->headers[i] = *header;
-    }
-    return r;
-}
-
-*/
-
-unsigned long int ipToDecimal(char * ip){
+unsigned long int ipToDecimal(char * ipR){
 	
-	char *token;
+    char * ip;
+    ip = (char*)malloc(sizeof(char)*100);
+    memset(ip,0,100);
+
+    memcpy(ip, ipR, 100);
+
+    char *token;
     token = strtok(ip, ".");
     
     unsigned long int a = atol(token);
@@ -142,7 +79,7 @@ unsigned long int ipToDecimal(char * ip){
     
     unsigned long int d = atol(token);
     //d = d << 8;
-    
+
     a = a | b | c | d;
     return a;
 }
@@ -190,7 +127,14 @@ char* decimalToIp(unsigned long int ip){
     return pAddr;
 }
 
-int extractInt(char* cidr){
+
+
+int extractInt(char* cidr_mask){
+
+    char * cidr;
+    cidr = (char*)malloc(sizeof(char)*10);
+    memcpy(cidr, cidr_mask, 10);
+
     //ESto para extraer el mumero del texto /29
 	char resp[5];;
     strcpy(resp, cidr);
@@ -204,13 +148,15 @@ int extractInt(char* cidr){
     return atoi(resp);
 }
 
-char ** tokenizer(char * buffer){
+
+
+TOKENS *tokenizer(char * buffer){
     pthread_mutex_lock(&tokenizer_lock);
     //Creo un array para guardar los tokens
     char **tokens;
+    int largo = 0;
     //Variable que guarda cada token
     char *token;
-    
     // Guardo memoria a los tokens
     tokens = malloc(MAX_TOKENS * sizeof(char*));
 
@@ -223,6 +169,7 @@ char ** tokenizer(char * buffer){
         token = strtok(NULL, " ");
         if (token == NULL){break;}
         i = i + 1;
+        largo ++;
     }
     
     //for(int i = 0; i < 6; i++) {
@@ -230,7 +177,70 @@ char ** tokenizer(char * buffer){
     //    strcpy(tokens[i], token);
     //    token = strtok(NULL, " ");
     //    }
-    return tokens; 
+    TOKENS *T;
+    T = (TOKENS *) malloc(sizeof(TOKENS));
+    T->lista = tokens;
+    T->largo = largo;
+    return T; 
+}
+
+int check(char* ipOrMask){
+    //Esta función me revisa los rangos de bytes de una ip o una mascara
+    char *ip;
+    ip = (char*)malloc(sizeof(char)*100);
+    memcpy(ip, ipOrMask, 100);
+    printf("IPXD: %s\n", ip);
+
+    char *token;
+    token = strtok(ip, ".");
+
+    for (int i = 0; i<4; i++){
+        if (atoi(token) > 255){
+            return -1;
+        }
+        token = strtok(NULL, ".");
+    }
+    return 1;
+}
+
+int checkIpAndMask(char **tokens, int largoListaTokens){
+    //Esta fucnión revisa si los rangos de la ip y la máscara son correctos
+    //Recibe el request por parte del usuario
+
+    int i = 0;
+
+    while (i<largoListaTokens){
+
+        if (strcmp(tokens[i], "IP") == 0){
+            // 1 indica que hay error 0 que no lo hay
+            if (check(tokens[i+1]) == -1){
+                return BAD_IP;
+            }
+
+        }else if (strcmp(tokens[i], "MASK") == 0){
+
+            //Pregunto si la mascara es del tipo scdir
+            if (strstr(tokens[i+1], "/") != NULL){
+                //Calculo el número de prefijo de la máscara si es /29
+                unsigned long int prefijo = extractInt(tokens[i + 1]);
+
+                if (prefijo > 32){
+                    return BAD_MASK;
+                }
+
+            }else{
+
+                if (check(tokens[i+1]) == -1){
+                    return BAD_MASK;
+                }
+            }
+
+        }
+        
+        i = i + 1;
+        
+    }
+    return 1;
 }
 
 int numeroPrimitiva(char * buffer){
@@ -273,16 +283,6 @@ int numeroPrimitiva(char * buffer){
         return -1;
     }
 }
-
-//main() {
-//    uint32_t ip = 4286578688;
-//    struct in_addr ip_addr;
-//    ip_addr.s_addr = ip;
-//    printf("The IP address is %s\n", inet_ntoa(ip_addr));
-//}
-
-//int ipToInt(){}
-//char * IntToIp{}
 
 
 
@@ -387,29 +387,56 @@ void * handleMessage(int* p_client_socket){
         printf("Primitiva es : %d\n", primitiva);
 
         char **tokens_broadcast;
-        tokens_broadcast = tokenizer(buffer);
+        TOKENS *T;
+        T = tokenizer(buffer);
+        tokens_broadcast = T->lista;
+        int largoListaTokens = T->largo; 
         pthread_mutex_unlock(&tokenizer_lock);
 
+        
+        if (primitiva >= 0){
+            //Checkeo que la ip y la mascara estén bien o sea dentro del rango permitido por ipv4
+            int check = checkIpAndMask(tokens_broadcast, largoListaTokens);
+            if (check == BAD_IP){
+                send(client_socket, "Error: IP no permitida", strlen("Error: IP no permitida"),0);
+                send(client_socket, "\n", strlen("\n"),0);
+                primitiva = NINGUN_CASO;
+            }else if (check == BAD_MASK){
+                send(client_socket, "Error: Mascara no permitida", strlen("Error: Mascara no permitida"),0);
+                send(client_socket, "\n", strlen("\n"),0);
+                primitiva = NINGUN_CASO;
+            }
+        }
+        
+        int i = 0;
+        while (1){
+            if (strcmp(tokens_broadcast[i], "")){
+                break;
+            }
+            printf("Token_Check: %s\n", tokens_broadcast[i]);
+            i++;
+        }
+         
+        
         if (primitiva == BROADCAST){
 
             //GUardo los tokens
-            if (strstr(tokens_broadcast[5], "/") != NULL) {            
+            if (strstr(tokens_broadcast[5], "/") != NULL) {          
                 //Calculo el número de prefijo de la máscara si es /29
-                unsigned long int prefijo = extractInt(tokens_broadcast[5]);
+                unsigned long int prefijo = extractInt(tokens_broadcast[5]); 
 
                 //Calculo el número de prefijo de la máscara si es /29
                 //printf("%ld\n", prefijo);
                 unsigned long int mask = pow(2,prefijo) -1;
                 mask = mask << (32-prefijo);
-                
+
                 //Extraigo el número de 32 bits que representa el ip
                 unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
 
                 //Realizo la operacion para sacar el broadcast
                 unsigned long int reverseMask = BITWISE_32UNOS;
                 reverseMask = reverseMask ^ mask;
-                unsigned long int broadcast = ipDec | reverseMask;
-
+                unsigned long int broadcast = ipDec | reverseMask; 
                 char * broadcastText = decimalToIp(broadcast);
                 //Le mando al cliente la respuesta
                 send(client_socket, broadcastText, strlen(broadcastText), 0);
@@ -510,8 +537,10 @@ void * handleMessage(int* p_client_socket){
             close(client_socket);
             printf("cerrando conexion\n");
             break;
-        }else{
-            printf("\nError de escritura o no existe el comando");
+        }else if (primitiva == NOT_COMMAND_FOUND){
+            char Resp[] = "Error: El comando no existe, revise que esté bien escrito";
+            send(client_socket, Resp, strlen(Resp),0);
+            send(client_socket, "\n", strlen("\n"),0);
         }
         memset(buffer,0,strlen(buffer));
         bytes_read = 0;

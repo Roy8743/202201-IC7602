@@ -449,7 +449,7 @@ void * handleMessage(int* p_client_socket){
 
             char *networkNumberText = decimalToIp(networkNumber);
             //Le mando al cliente la respuesta
-            send(client_socket,networkNumber, strlen(networkNumber),0);
+            send(client_socket,networkNumberText, strlen(networkNumberText),0);
             //printf("NUmero de red: %s\n", decimalToIp(networkNumber));
 
         }else{
@@ -461,8 +461,9 @@ void * handleMessage(int* p_client_socket){
             unsigned long int networkNumber = ipDec & mask;
 
             char *networkNumberText = decimalToIp(networkNumber);
+            
             //Le mando al cliente la respuesta
-            send(client_socket,networkNumber, strlen(networkNumber),0);
+            send(client_socket,networkNumberText, strlen(networkNumberText),0);
             //printf("NUmero de red: %s\n", decimalToIp(networkNumber));
         }
         

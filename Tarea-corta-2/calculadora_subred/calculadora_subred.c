@@ -349,10 +349,26 @@ char * usableIpRange(unsigned long int ip, unsigned long int mask){
     return ipRange;
 }
 
-//void writeResponse(int client_socket, char* message){
-    //Le mando al cliente la respuesta
-  //  write(client_socket, message, sizeof(message));
-//}
+unsigned long int getMask(char *mask){
+
+    char *maskText;
+    maskText = (char*)malloc(sizeof(char)*200);
+    memcpy(maskText, mask, 200);
+
+    if (strstr(maskText, "/") != NULL) {
+                //Calculo el número de prefijo de la máscara si es /entero
+                unsigned long int prefijo = extractInt(maskText);
+
+                unsigned long int mask = pow(2,prefijo) -1;
+                mask = mask << (32-prefijo);
+                return mask;
+
+            }else{
+                //Convierto la máscara a decimal
+                unsigned long int mask = ipToDecimal(maskText);
+                return mask;
+            }
+}
 
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
@@ -419,119 +435,61 @@ void * handleMessage(int* p_client_socket){
          
         
         if (primitiva == BROADCAST){
-
-            //GUardo los tokens
-            if (strstr(tokens_broadcast[5], "/") != NULL) {          
-                //Calculo el número de prefijo de la máscara si es /29
-                unsigned long int prefijo = extractInt(tokens_broadcast[5]); 
-
-                //Calculo el número de prefijo de la máscara si es /29
-                //printf("%ld\n", prefijo);
-                unsigned long int mask = pow(2,prefijo) -1;
-                mask = mask << (32-prefijo);
-
-                //Extraigo el número de 32 bits que representa el ip
-                unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
-
-                //Realizo la operacion para sacar el broadcast
-                unsigned long int reverseMask = BITWISE_32UNOS;
-                reverseMask = reverseMask ^ mask;
-                unsigned long int broadcast = ipDec | reverseMask; 
-                char * broadcastText = decimalToIp(broadcast);
-                //Le mando al cliente la respuesta
-                send(client_socket, broadcastText, strlen(broadcastText), 0);
-                send(client_socket, "\n", strlen("\n"),0);
             
-            //La mascara viene en formato 255.255.255.255
-            }else{
-                //Convierto la máscara a decimal
-                unsigned long int mask = ipToDecimal(tokens_broadcast[5]);
+            //Tomo la máscara y la convierto a decimal
+            unsigned long int mask = getMask(tokens_broadcast[5]);
+            //Extraigo el número de 32 bits que representa el ip
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
 
-                //Convierto ip a decimal
-                unsigned long int ipDec = ipToDecimal(tokens_broadcast[3]);
+            //Revierto la máscara
+            unsigned long int reverseMask = BITWISE_32UNOS;
+            reverseMask = reverseMask ^ mask;
 
-                //Realizo la operacion para sacar el broadcast
-                unsigned long int reverseMask = BITWISE_32UNOS;
-                reverseMask = reverseMask ^ mask;
-                unsigned long int broadcast = ipDec | reverseMask;
-                
-                //Le mando al cliente la respuesta
-                char * broadcastText = decimalToIp(broadcast);
-                //Le mando al cliente la respuesta
-                send(client_socket, broadcastText, strlen(broadcastText), 0);
-                send(client_socket, "\n", strlen("\n"),0);
-                //printf("%s\n",decimalToIp(broadcast));
-            }
+            //Hago la operación para el broadcast
+            unsigned long int broadcast = ipDec | reverseMask; 
+            
+            char * broadcastText = decimalToIp(broadcast);
+            //Le mando al cliente la respuesta
+            send(client_socket, broadcastText, strlen(broadcastText), 0);
+            send(client_socket, "\n", strlen("\n"),0);
 
+            
         }else if (primitiva == NETWORK_NUMBER){
             //Tambien conocido como network address
             
-            if (strstr(tokens_broadcast[6], "/") != NULL) {
-                //Calculo el número de prefijo de la máscara si es /entero
-                unsigned long int prefijo = extractInt(tokens_broadcast[6]);
-                //Extraigo el número de 32 bits que representa el ip
-                unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+            //Tomo la máscara y la convierto a decimal
+            unsigned long int mask = getMask(tokens_broadcast[6]);
 
-                unsigned long int mask = pow(2,prefijo) -1;
-                mask = mask << (32-prefijo);
+            //Obtengo el ip
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
 
-                //Calculo de numero de red
-                unsigned long int networkNumber = ipDec & mask;
+            //Calculo de numero de red
+            unsigned long int networkNumber = ipDec & mask;
+            char *networkNumberText = decimalToIp(networkNumber);
+            //Le mando al cliente la respuesta
+            send(client_socket,networkNumberText, strlen(networkNumberText),0);
+            send(client_socket, "\n", strlen("\n"),0);
 
-                char *networkNumberText = decimalToIp(networkNumber);
-                //Le mando al cliente la respuesta
-                send(client_socket,networkNumberText, strlen(networkNumberText),0);
-                send(client_socket, "\n", strlen("\n"),0);
-                //printf("NUmero de red: %s\n", decimalToIp(networkNumber));
-
-            }else{
-                //Convierto la máscara a decimal
-                unsigned long int mask = ipToDecimal(tokens_broadcast[6]);
-                //Convierto ip a decimal
-                unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
-
-                unsigned long int networkNumber = ipDec & mask;
-
-                char *networkNumberText = decimalToIp(networkNumber);
-                
-                //Le mando al cliente la respuesta
-                send(client_socket,networkNumberText, strlen(networkNumberText),0);
-                send(client_socket, "\n", strlen("\n"),0);
-                //printf("NUmero de red: %s\n", decimalToIp(networkNumber));
-            }
             
         }else if (primitiva == HOSTS_RANGE){
-            if(strstr(tokens_broadcast[6], "/") != NULL){
-                //Calculo el número de prefijo de la máscara si es /entero
-                unsigned long int prefijo = extractInt(tokens_broadcast[6]);
-                //Extraigo el número de 32 bits que representa el ip
-                unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+             //Tomo la máscara y la convierto a decimal
+            unsigned long int mask = getMask(tokens_broadcast[6]);
+            //Extraigo el número de 32 bits que representa el ip
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+            char * hostRange = usableIpRange(ipDec, mask);
 
-                unsigned long int mask = pow(2,prefijo) -1;
-                mask = mask << (32-prefijo);
-
-                char * hostRange = usableIpRange(ipDec, mask);
-
-                //Le mando al cliente la respuesta
-                send(client_socket,hostRange, strlen(hostRange),0);
-                send(client_socket, "\n", strlen("\n"),0);
-                //printf("hostRange: %s\n", hostRange);
-
-            }else{
-                //Convierto la máscara a decimal
-                unsigned long int mask = ipToDecimal(tokens_broadcast[6]);
-                //Convierto ip a decimal
-                unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
-
-                char * hostRange = usableIpRange(ipDec, mask);
-
-                //Le mando al cliente la respuesta
-                send(client_socket,hostRange, strlen(hostRange),0);
-                send(client_socket, "\n", strlen("\n"),0);
-                //printf("hostRange: %s\n", hostRange);
-            }
+            //Le mando al cliente la respuesta
+            send(client_socket,hostRange, strlen(hostRange),0);
+            send(client_socket, "\n", strlen("\n"),0);
+            
 
         }else if (primitiva == RANDOM_SUBNETS){
+            //Convierto ip a decimal
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
+
+            //Convierto la máscara 2 a decimal
+            unsigned long int mask = ipToDecimal(tokens_broadcast[6]);
+
 
         }else if (primitiva == EXIT){
             close(client_socket);
@@ -603,6 +561,5 @@ int main(int argc, char **argv){
         pthread_create(&thread, NULL, (void *) handleMessage, pclient);
         
     }
-
     return 0;
 }

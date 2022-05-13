@@ -411,6 +411,7 @@ void * handleMessage(int* p_client_socket){
             char * broadcastText = decimalToIp(broadcast);
             //Le mando al cliente la respuesta
             send(client_socket, broadcastText, strlen(broadcastText), 0);
+            send(client_socket, "\n", strlen("\n"),0);
         
         //La mascara viene en formato 255.255.255.255
         }else{
@@ -429,6 +430,7 @@ void * handleMessage(int* p_client_socket){
             char * broadcastText = decimalToIp(broadcast);
             //Le mando al cliente la respuesta
             send(client_socket, broadcastText, strlen(broadcastText), 0);
+            send(client_socket, "\n", strlen("\n"),0);
             //printf("%s\n",decimalToIp(broadcast));
         }
 
@@ -450,6 +452,7 @@ void * handleMessage(int* p_client_socket){
             char *networkNumberText = decimalToIp(networkNumber);
             //Le mando al cliente la respuesta
             send(client_socket,networkNumberText, strlen(networkNumberText),0);
+            send(client_socket, "\n", strlen("\n"),0);
             //printf("NUmero de red: %s\n", decimalToIp(networkNumber));
 
         }else{
@@ -464,6 +467,7 @@ void * handleMessage(int* p_client_socket){
             
             //Le mando al cliente la respuesta
             send(client_socket,networkNumberText, strlen(networkNumberText),0);
+            send(client_socket, "\n", strlen("\n"),0);
             //printf("NUmero de red: %s\n", decimalToIp(networkNumber));
         }
         
@@ -481,6 +485,7 @@ void * handleMessage(int* p_client_socket){
 
             //Le mando al cliente la respuesta
             send(client_socket,hostRange, strlen(hostRange),0);
+            send(client_socket, "\n", strlen("\n"),0);
             //printf("hostRange: %s\n", hostRange);
 
         }else{
@@ -493,14 +498,16 @@ void * handleMessage(int* p_client_socket){
 
             //Le mando al cliente la respuesta
             send(client_socket,hostRange, strlen(hostRange),0);
+            send(client_socket, "\n", strlen("\n"),0);
             //printf("hostRange: %s\n", hostRange);
         }
 
     }else if (primitiva == RANDOM_SUBNETS){
-        
+
     }else{
-        printf("\nError no existe el comando");
+        printf("\nError de escritura o no existe el comando");
     }
+
     close(client_socket);
     printf("cerrando conexion\n");
 }

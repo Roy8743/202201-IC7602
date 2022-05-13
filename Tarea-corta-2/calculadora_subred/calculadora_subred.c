@@ -189,7 +189,6 @@ int check(char* ipOrMask){
     char *ip;
     ip = (char*)malloc(sizeof(char)*100);
     memcpy(ip, ipOrMask, 100);
-    printf("IPXD: %s\n", ip);
 
     char *token;
     token = strtok(ip, ".");
@@ -288,7 +287,7 @@ int numeroPrimitiva(char * buffer){
 
 char * usableIpRange(unsigned long int ip, unsigned long int mask){
     //recibo el ip y las mascara en decimal
-    printf("Mask: %ld\n", mask);
+
     //Calculo el networkNumber
     unsigned long int networkAddress = ip & mask;
 
@@ -423,15 +422,6 @@ void * handleMessage(int* p_client_socket){
                 primitiva = NINGUN_CASO;
             }
         }
-        
-        int i = 0;
-        while (1){
-            if (strcmp(tokens_broadcast[i], "")){
-                break;
-            }
-            printf("Token_Check: %s\n", tokens_broadcast[i]);
-            i++;
-        }
          
         
         if (primitiva == BROADCAST){
@@ -485,16 +475,22 @@ void * handleMessage(int* p_client_socket){
 
         }else if (primitiva == RANDOM_SUBNETS){
             //Convierto ip a decimal
-            unsigned long int ipDec = ipToDecimal(tokens_broadcast[4]);
-
+            unsigned long int ipDec = ipToDecimal(tokens_broadcast[5]);
+            //Convierto la máscara 1 a decimal
+            unsigned long int mask = ipToDecimal(tokens_broadcast[7]);
             //Convierto la máscara 2 a decimal
-            unsigned long int mask = ipToDecimal(tokens_broadcast[6]);
+            unsigned long int mask = ipToDecimal(tokens_broadcast[11]);
+            //Tomo la cantidad de de redes
+            unsigned long int cantRedes = tokens_broadcast[9];
+
+            
 
 
         }else if (primitiva == EXIT){
             close(client_socket);
             printf("cerrando conexion\n");
             break;
+
         }else if (primitiva == NOT_COMMAND_FOUND){
             char Resp[] = "Error: El comando no existe, revise que esté bien escrito";
             send(client_socket, Resp, strlen(Resp),0);

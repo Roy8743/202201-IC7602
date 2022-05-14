@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <regex.h>
 #include <math.h>
+#include <time.h>
 
 //Puerto de mi servidor
 #define PORT 9666
@@ -130,7 +131,8 @@ char* decimalToIp(unsigned long int ip){
 
 
 int extractInt(char* cidr_mask){
-
+    //Recibe una mascar en notacion ciddr /xx
+    //Retorna el numero entero despues de la barra inclinada
     char * cidr;
     cidr = (char*)malloc(sizeof(char)*10);
     memcpy(cidr, cidr_mask, 10);
@@ -349,6 +351,8 @@ char * usableIpRange(unsigned long int ip, unsigned long int mask){
 }
 
 unsigned long int getMask(char *mask){
+    //Para numero aleatorio
+    srand (time(NULL));
 
     char *maskText;
     maskText = (char*)malloc(sizeof(char)*200);
@@ -368,6 +372,7 @@ unsigned long int getMask(char *mask){
                 return mask;
             }
 }
+
 
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
@@ -477,12 +482,36 @@ void * handleMessage(int* p_client_socket){
             //Convierto ip a decimal
             unsigned long int ipDec = ipToDecimal(tokens_broadcast[5]);
             //Convierto la máscara 1 a decimal
-            unsigned long int mask = ipToDecimal(tokens_broadcast[7]);
+            unsigned long int mask1 = getMask(tokens_broadcast[7]);
             //Convierto la máscara 2 a decimal
-            unsigned long int mask = ipToDecimal(tokens_broadcast[11]);
-            //Tomo la cantidad de de redes
-            unsigned long int cantRedes = tokens_broadcast[9];
+            unsigned long int mask2 = getMask(tokens_broadcast[11]);
 
+            //Tomo la cantidad de de redes
+            char *eptr;
+            unsigned long int cantRedes;
+            cantRedes = strtoul(tokens_broadcast[9], &eptr, cantRedes);
+            
+
+
+            //Paso 1 XOR entre la primera máscara y la segunda
+            unsigned long int maskXor = mask1 ^ mask2;
+            //Paso 2 OR entre la ip y la mascara resultante del xor
+            unsigned long int upRange = ipDec | maskXor;
+            //Genero los numeros aleatorios
+            unsigned long int aleatorio = rand () % (ipDec-upRange+1) + upRange;   // Este está entre M y N
+
+            for(int i = 1; i<=cantRedes; i++){
+                unsigned long int ipAleatoriaBase = aleatorio & maskXor;
+                unsigned long int ipAleatoria = ipDec | ipAleatoriaBase;
+
+                char *ip = decimalToIp(ipAleatoria);
+                send(client_socket, ip, strlen(ip), 0);
+                send(client_socket, "\n", strlen("\n"),0);
+
+                aleatorio = rand () % (ipDec-upRange+1) + upRange;
+            }
+
+            cantRedes = 0;
             
 
 

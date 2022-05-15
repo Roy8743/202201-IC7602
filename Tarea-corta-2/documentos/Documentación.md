@@ -79,7 +79,7 @@ Para ejecutar el servidor o calculadora de red, se habre la carpeta del proyecto
 
 ### <font size="5">**En Windows**</font>
 ```bash
-docker-compose up --build
+docker-compose up -d --build
 ```
 
 - Algunas veces en Windows es necesario añadir manualmente la carpeta de \Docker\resources\bin a la
@@ -88,7 +88,7 @@ variable de entorno PATH para que reconozca el comando ***docker-compose***.
 ### <font size="5">**En linux**</font>
 
 ``` bash
-docker-compose up --build
+docker-compose up -d --build
 ```
 
 - Recomendación: Utilizar Visual Studio Code para abrir la carpeta y una consola.
@@ -164,7 +164,7 @@ exit
 
 # Recomendaciones
 - Utilizar visual studio code para abrir la carpeta de la aplicación y ejecutarla.
-
+- Utilizar calculadoras de red en linea para corroborar respuesta.
 
 
 ## Referencias

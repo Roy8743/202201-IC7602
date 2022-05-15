@@ -52,9 +52,7 @@ struct TOKENS{
 
 
 //Candados para proteccion de zonas de código
-pthread_mutex_t lock_primitivas = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t Mask = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t tokenizer_lock = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 unsigned long int ipToDecimal(char * ipR){
@@ -155,7 +153,6 @@ int extractInt(char* cidr_mask){
 
 
 TOKENS *tokenizer(char * buffer){
-    pthread_mutex_lock(&tokenizer_lock);
     //Creo un array para guardar los tokens
     char **tokens;
     int largo = 0;
@@ -247,7 +244,6 @@ int checkIpAndMask(char **tokens, int largoListaTokens){
 }
 
 int numeroPrimitiva(char * buffer){
-    pthread_mutex_lock(&lock_primitivas);
     regex_t regex;
 
     int broadcast;
@@ -374,6 +370,13 @@ unsigned long int getMask(char *mask){
             }
 }
 
+int decimalToCidr(unsigned int i){
+
+     i = i - ((i >> 1) & 0x55555555); // add pairs of bits
+     i = (i & 0x33333333) + ((i >> 2) & 0x33333333); // quads
+     i = (i + (i >> 4)) & 0x0F0F0F0F; // groups of 8
+     return (i * 0x01010101) >> 24;  // horizontal sum of bytes
+}
 
 void * handleMessage(int* p_client_socket){
     int client_socket = *p_client_socket;
@@ -404,7 +407,6 @@ void * handleMessage(int* p_client_socket){
         printf("%s\n",buffer);
 
         int primitiva = numeroPrimitiva(buffer);
-        pthread_mutex_unlock(&lock_primitivas);
         printf("Primitiva es : %d\n", primitiva);
 
         char **tokens_broadcast;
@@ -412,7 +414,6 @@ void * handleMessage(int* p_client_socket){
         T = tokenizer(buffer);
         tokens_broadcast = T->lista;
         int largoListaTokens = T->largo; 
-        pthread_mutex_unlock(&tokenizer_lock);
 
         
         if (primitiva >= 0){
@@ -506,13 +507,21 @@ void * handleMessage(int* p_client_socket){
             
 
             for(int i = 1; i<=cantRedes; i++){
+                //Guardo el ciddr para la respuesta
+                char cidr[5];
+                int cidrNumber = decimalToCidr(mask2);
+                sprintf(cidr, "%d", cidrNumber);
+
                 unsigned long int ipAleatoria = aleatorio & mask2;
 
                 char *ip = decimalToIp(ipAleatoria);
                 send(client_socket, ip, strlen(ip), 0);
+                send(client_socket, "/", 1, 0);
+                send(client_socket, cidr, 5, 0);
                 send(client_socket, "\n", strlen("\n"),0);
 
                 aleatorio = rand () % (upRange-networkNumber+1) + networkNumber;
+                memset(cidr, 0, 5);
             }
 
             cantRedes = 0;

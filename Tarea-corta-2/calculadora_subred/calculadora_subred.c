@@ -18,6 +18,8 @@
 #define MAX_PATH 4096 //max cantidad de caraceteres en el path
 #define MAX_TOKENS 15 
 
+#define uint unsigned int
+
 //Tamaño del buffer para recibir mensjaes por parte de un cliente
 //#define BUFSIZ 2048
 
@@ -352,7 +354,6 @@ char * usableIpRange(unsigned long int ip, unsigned long int mask){
 
 unsigned long int getMask(char *mask){
     //Para numero aleatorio
-    srand (time(NULL));
 
     char *maskText;
     maskText = (char*)malloc(sizeof(char)*200);
@@ -485,6 +486,7 @@ void * handleMessage(int* p_client_socket){
             unsigned long int mask1 = getMask(tokens_broadcast[7]);
             //Convierto la máscara 2 a decimal
             unsigned long int mask2 = getMask(tokens_broadcast[11]);
+            //printf("MASK: %ld\n", mask2 >> (32 - 8));
 
             //Tomo la cantidad de de redes
             char *eptr;
@@ -492,23 +494,25 @@ void * handleMessage(int* p_client_socket){
             cantRedes = strtoul(tokens_broadcast[9], &eptr, cantRedes);
             
 
+            //Paso 1 And entre la ip y ña máscara (obtener el numero de red)
+            unsigned long int networkNumber = ipDec & mask1;
 
-            //Paso 1 XOR entre la primera máscara y la segunda
-            unsigned long int maskXor = mask1 ^ mask2;
-            //Paso 2 OR entre la ip y la mascara resultante del xor
-            unsigned long int upRange = ipDec | maskXor;
+            //Paso 2 obtener el ip maximo con ipDec | not (mask1)
+            unsigned int netMaskNot = ~mask1;
+            unsigned long int upRange = networkNumber | netMaskNot;
+
             //Genero los numeros aleatorios
-            unsigned long int aleatorio = rand () % (ipDec-upRange+1) + upRange;   // Este está entre M y N
+            unsigned long int aleatorio = (rand () % (upRange-networkNumber+1)) + networkNumber; 
+            
 
             for(int i = 1; i<=cantRedes; i++){
-                unsigned long int ipAleatoriaBase = aleatorio & maskXor;
-                unsigned long int ipAleatoria = ipDec | ipAleatoriaBase;
+                unsigned long int ipAleatoria = aleatorio & mask2;
 
                 char *ip = decimalToIp(ipAleatoria);
                 send(client_socket, ip, strlen(ip), 0);
                 send(client_socket, "\n", strlen("\n"),0);
 
-                aleatorio = rand () % (ipDec-upRange+1) + upRange;
+                aleatorio = rand () % (upRange-networkNumber+1) + networkNumber;
             }
 
             cantRedes = 0;
@@ -535,7 +539,7 @@ void * handleMessage(int* p_client_socket){
 
 
 int main(int argc, char **argv){
-
+     srand (time(NULL));
 
     int server;
     unsigned int addr_size;

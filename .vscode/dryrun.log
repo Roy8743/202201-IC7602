@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/estudiante/Escritorio/202201-IC7602'
+make: Leaving directory '/home/estudiante/Escritorio/202201-IC7602'
+ 
+make: *** No targets specified and no makefile found.  Stop.
+
